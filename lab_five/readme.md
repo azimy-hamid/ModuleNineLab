@@ -1,4 +1,4 @@
-# Chat App Documentation
+# Lab 5
 
 ## Overview
 
