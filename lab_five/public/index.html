@@ -20,12 +20,12 @@
         overflow-y: auto;
       }
       .my-message {
-        color: blue; /* Color for sent messages */
-        text-align: right; /* Align to the right */
+        color: blue;
+        text-align: right;
       }
       .other-message {
-        color: green; /* Color for received messages */
-        text-align: left; /* Align to the left */
+        color: green;
+        text-align: left;
       }
       .typing {
         font-style: italic;
@@ -52,9 +52,10 @@
           id="message"
           class="form-control"
           placeholder="Type a message..."
+          disabled
         />
         <div class="input-group-append">
-          <button class="btn btn-outline-secondary" id="sendMessage">
+          <button class="btn btn-outline-secondary" id="sendMessage" disabled>
             Send
           </button>
         </div>
@@ -72,12 +73,19 @@
       const setNicknameButton = document.getElementById("setNickname");
 
       let typingTimeout;
-      let nickname = ""; // Store the nickname
+      let nickname = "";
 
       setNicknameButton.onclick = () => {
-        nickname = nicknameInput.value; // Set the nickname
-        socket.emit("setNickname", nickname);
-        nicknameInput.disabled = true;
+        nickname = nicknameInput.value.trim();
+        if (nickname) {
+          socket.emit("setNickname", nickname);
+          nicknameInput.disabled = true;
+          setNicknameButton.disabled = true;
+
+          // Enable message input and send button
+          messageInput.disabled = false;
+          document.getElementById("sendMessage").disabled = false;
+        }
       };
 
       messageInput.addEventListener("keypress", () => {
@@ -87,10 +95,9 @@
       });
 
       messageInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && nickname) {
           const msg = messageInput.value;
-          displayMessage(msg, nickname);
-          socket.emit("chatMessage", { msg, nickname }); // Correctly structured
+          socket.emit("chatMessage", { msg, nickname });
           messageInput.value = ""; // Clear input field
           typingStatus.textContent = ""; // Clear typing status on send
         }
@@ -99,7 +106,7 @@
       function displayMessage(msg, senderNickname) {
         const item = document.createElement("li");
         item.className = "list-group-item";
-        item.textContent = `${senderNickname}: ${msg}`; // Show the message correctly
+        item.textContent = `${senderNickname}: ${msg}`;
         if (senderNickname === nickname) {
           item.classList.add("my-message");
         } else {
@@ -110,24 +117,29 @@
       }
 
       socket.on("chatMessage", (data) => {
-        const { msg, nickname: senderNickname } = data; // Destructure correctly
-        displayMessage(msg, senderNickname); // Display message correctly
+        const { msg, nickname } = data;
+        displayMessage(msg, nickname);
       });
 
       socket.on("userConnected", (nickname) => {
-        const item = document.createElement("li");
-        item.className = "list-group-item";
-        item.textContent = `${nickname} has joined.`;
-        messages.appendChild(item);
-        messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
+        if (nickname) {
+          const item = document.createElement("li");
+          item.className = "list-group-item";
+          item.textContent = `${nickname} has joined.`;
+          messages.appendChild(item);
+          messages.scrollTop = messages.scrollHeight;
+        }
       });
 
       socket.on("userDisconnected", (nickname) => {
-        const item = document.createElement("li");
-        item.className = "list-group-item";
-        item.textContent = `${nickname} has left.`;
-        messages.appendChild(item);
-        messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
+        if (nickname) {
+          // Only show message if nickname is not null or empty
+          const item = document.createElement("li");
+          item.className = "list-group-item";
+          item.textContent = `${nickname} has left.`;
+          messages.appendChild(item);
+          messages.scrollTop = messages.scrollHeight;
+        }
       });
 
       socket.on("typing", (nickname) => {

@@ -29,11 +29,8 @@ io.on("connection", (socket) => {
     io.emit("updateUserList", Object.values(users));
   });
 
-  socket.on("chatMessage", (msg) => {
-    socket.broadcast.emit("chatMessage", {
-      msg,
-      nickname: users[socket.id],
-    });
+  socket.on("chatMessage", (data) => {
+    io.emit("chatMessage", { msg: data.msg, nickname: users[socket.id] });
   });
 
   socket.on("typing", () => {
