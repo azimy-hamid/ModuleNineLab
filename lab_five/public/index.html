@@ -31,6 +31,9 @@
         font-style: italic;
         color: gray;
       }
+      #userList {
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body class="bg-light">
@@ -61,6 +64,12 @@
         </div>
       </div>
       <div id="typingStatus" class="mt-2"></div>
+
+      <!-- Online Users List -->
+      <div id="userList">
+        <h5>Users Online:</h5>
+        <ul id="onlineUsers" class="list-group"></ul>
+      </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -71,6 +80,7 @@
       const typingStatus = document.getElementById("typingStatus");
       const nicknameInput = document.getElementById("nickname");
       const setNicknameButton = document.getElementById("setNickname");
+      const onlineUsersList = document.getElementById("onlineUsers");
 
       let typingTimeout;
       let nickname = "";
@@ -116,6 +126,16 @@
         messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
       }
 
+      function updateOnlineUsers(userList) {
+        onlineUsersList.innerHTML = ""; // Clear current list
+        userList.forEach((user) => {
+          const userItem = document.createElement("li");
+          userItem.className = "list-group-item";
+          userItem.textContent = user;
+          onlineUsersList.appendChild(userItem);
+        });
+      }
+
       socket.on("chatMessage", (data) => {
         const { msg, nickname } = data;
         displayMessage(msg, nickname);
@@ -133,7 +153,6 @@
 
       socket.on("userDisconnected", (nickname) => {
         if (nickname) {
-          // Only show message if nickname is not null or empty
           const item = document.createElement("li");
           item.className = "list-group-item";
           item.textContent = `${nickname} has left.`;
@@ -151,7 +170,7 @@
       });
 
       socket.on("updateUserList", (userListArray) => {
-        // Update user list if needed
+        updateOnlineUsers(userListArray);
       });
     </script>
   </body>
